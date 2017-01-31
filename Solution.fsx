@@ -28,13 +28,13 @@ let getFsxFromLoad ( load : Load ) : Fsx =
 let rec buildModuleFromLoad ( load : Load ) : Module =
   let getModuleNameFromFsx ( fsx : Fsx ) : string =
     Path.GetFileNameWithoutExtension fsx
+
   let fsx = getFsxFromLoad load
   let lines = fsx |> loadFsx
 
-  let loads = lines |> getLoads
-
   let innerFsxs = 
-    loads 
+    lines 
+    |> getLoads
     |> Seq.map ( getFsxFromLoad >> loadFsx )
 
   let innerLoads =
@@ -45,8 +45,6 @@ let rec buildModuleFromLoad ( load : Load ) : Module =
     innerFsxs
     |> Seq.map getCode
 
-  let codes = Seq.zip innerLoads innerCode
-
   let result = 
     lines 
     |> getCode 
@@ -55,26 +53,17 @@ let rec buildModuleFromLoad ( load : Load ) : Module =
     |> Seq.toList
 
   let folder i s =
-    let p1a =
-      fst s 
-      |> Seq.map ( getFsxFromLoad >> getModuleNameFromFsx >> buildModuleFromLoad >> ( sprintf "module %s =" ) )
-      |> Seq.filter ( fun line -> line.StartsWith "#load" |> not )
-
-    let p1 =
-      p1a |> Seq.map ( (+) "\n\n" ) |> String.concat "\n"
-
-    let p2 =
-      p1
-      |> cons ( snd s |> Array.map ( (+) "  " ) |> Seq.toList ) |> String.concat "\n" 
-
-    let p3 =
-      p2
-      |> cons i
-
-    p3
+    fst s 
+    |> Seq.map ( getFsxFromLoad >> getModuleNameFromFsx >> buildModuleFromLoad >> ( sprintf "module %s =" ) )
+    |> Seq.filter ( fun line -> line.StartsWith "#load" |> not )
+    |> Seq.map ( (+) "\n\n" ) 
+    |> String.concat "\n"
+    |> cons ( snd s |> Array.map ( (+) "  " ) |> Seq.toList ) 
+    |> String.concat "\n" 
+    |> cons i
 
   let innerCode = 
-    codes 
+    Seq.zip innerLoads innerCode 
     |> Seq.fold folder result
     |> String.concat "\n"
 
