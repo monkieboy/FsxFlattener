@@ -55,7 +55,6 @@ let rec buildModuleFromLoad ( load : Load ) : Module =
   let folder i s =
     fst s 
     |> Seq.map ( getFsxFromLoad >> getModuleNameFromFsx >> buildModuleFromLoad >> ( sprintf "module %s =" ) )
-    |> Seq.filter ( fun line -> line.StartsWith "#load" |> not )
     |> Seq.map ( (+) "\n\n" ) 
     |> String.concat "\n"
     |> cons ( snd s |> Array.map ( (+) "  " ) |> Seq.toList ) 
@@ -88,3 +87,4 @@ let run fsx =
 
 run "MainOneLevel.fsx"
 run "MainTwoLevels.fsx"
+run "FirstTwoLevels.fsx"
